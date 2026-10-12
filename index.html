@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>マイ・DJサウンドボード</title>
+  <style>
+    body {
+      font-family: 'Courier New', Courier, monospace;
+      background-color: #121212;
+      color: #e0e0e0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 20px;
+      margin: 0;
+    }
+    h1 {
+      font-size: 1.4rem;
+      color: #00ffcc;
+      text-shadow: 0 0 10px rgba(0,255,204,0.5);
+      margin-bottom: 20px;
+    }
+    /* DJブース全体の枠組み */
+    .dj-booth {
+      background: #1e1e1e;
+      border: 4px solid #333;
+      border-radius: 16px;
+      padding: 20px;
+      width: 100%;
+      max-width: 420px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.8);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 20px;
+    }
+    /* ターンテーブル部分 */
+    .turntable-container {
+      position: relative;
+      width: 240px;
+      height: 240px;
+      background: #2b2b2b;
+      border-radius: 50%;
+      border: 6px solid #444;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: inset 0 0 15px rgba(0,0,0,0.9);
+      cursor: pointer;
+      user-select: none;
+    }
+    /* レコード盤 */
+    .record {
+      width: 220px;
+      height: 220px;
+      background: radial-gradient(circle, #111 30%, #222 31%, #111 35%, #000 60%);
+      border-radius: 50%;
+      position: absolute;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+      transition: transform 0.1s linear;
+    }
+    /* 回転アニメーション */
+    .record.spinning {
+      animation: spin 2s linear infinite;
+    }
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    /* レコードの中心レーベル */
+    .label {
+      width: 80px;
+      height: 80px;
+      background: #ff3366;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: bold;
+      font-size: 0.8rem;
+      border: 3px dashed #fff;
+      text-align: center;
+    }
+    /* ピッチ（速度）スライダーエリア */
+    .controls {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      background: #151515;
+      padding: 12px;
+      border-radius: 8px;
+    }
+    .controls label {
+      font-size: 0.85rem;
+      color: #aaa;
+    }
+    .controls input[type=range] {
+      width: 100%;
+      accent-color: #00ffcc;
+    }
+    /* 効果音ポン出しパッドのグリッド */
+    .pad-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+      width: 100%;
+    }
+    .sound-btn {
+      background: linear-gradient(135deg, #333, #222);
+      color: #00ffcc;
+      border: 2px solid #00ffcc;
+      border-radius: 8px;
+      padding: 15px 10px;
+      font-size: 1rem;
+      font-weight: bold;
+      cursor: pointer;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+      transition: all 0.1s;
+    }
+    .sound-btn:active {
+      transform: scale(0.95);
+      background: #00ffcc;
+      color: #121212;
+      box-shadow: 0 0 15px #00ffcc;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>MIX DJ BOOTH</h1>
+
+  <div class="dj-booth">
+    <!-- ターンテーブル -->
+    <div class="turntable-container" onclick="toggleTurntable()">
+      <div class="record" id="recordDisk">
+        <div class="label">SCRATCH<br>PLAY</div>
+      </div>
+    </div>
+
+    <!-- ピッチコントロール（再生スピード調整） -->
+    <div class="controls">
+      <label for="speedRate">再生スピード (ピッチ): <span id="speedVal">1.0</span>x</label>
+      <input type="range" id="speedRate" min="0.5" max="2.0" step="0.1" value="1.0" oninput="changeSpeed(this.value)">
+    </div>
+
+    <!-- 効果音ポン出しパッド -->
+    <div class="pad-grid">
+      <button class="sound-btn" onclick="playEffect('sound1.mp3')"> (SE 1)</button>
+      <button class="sound-btn" onclick="playEffect('sound2.mp3')"> (SE 2)</button>
+      <button class="sound-btn" onclick="playEffect('sound3.mp3')"> (SE 2)</button>
+            <button class="sound-btn" onclick="playEffect('sound4.mp3')"> (SE 2)</button>
+                  <button class="sound-btn" onclick="playEffect('sound5.mp3')"> (SE 2)</button>
+                        <button class="sound-btn" onclick="playEffect('sound6.mp3')"> (SE 2)</button>
+                              <button class="sound-btn" onclick="playEffect('sound7.mp3')"> (SE 2)</button>
+    </div>
+  </div>
+
+  <script>
+    // ターンテーブル用の音声要素
+    let turntableAudio = new Audio('sound1.mp3'); // メイン楽曲やDJ用音源
+    let isPlaying = false;
+    const recordDisk = document.getElementById('recordDisk');
+    const speedVal = document.getElementById('speedVal');
+
+    // ターンテーブルの再生・停止・回転切り替え
+    function toggleTurntable() {
+      if (!isPlaying) {
+        turntableAudio.loop = true;
+        turntableAudio.play().then(() => {
+          isPlaying = true;
+          recordDisk.classList.add('spinning');
+        }).catch(err => console.log("再生エラー:", err));
+      } else {
+        turntableAudio.pause();
+        turntableAudio.currentTime = 0;
+        isPlaying = false;
+        recordDisk.classList.remove('spinning');
+      }
+    }
+
+    // スピード（ピッチ）変更機能
+    function changeSpeed(val) {
+      turntableAudio.playbackRate = val;
+      speedVal.innerText = val;
+    }
+
+    // 効果音（ポン出し）の再生
+    function playEffect(filename) {
+      const se = new Audio(filename);
+      se.currentTime = 0;
+      se.play().catch(err => console.log("SEエラー:", err));
+    }
+  </script>
+</body>
+</html>
